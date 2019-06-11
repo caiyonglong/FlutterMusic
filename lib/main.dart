@@ -8,11 +8,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: new RandomWords(),
+      title: 'MusicLake',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: new RandomWords(),
     );
   }
 }
@@ -20,7 +20,6 @@ class MyApp extends StatelessWidget {
 class RandomWords extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => new RandomWordsState();
-
 }
 
 class RandomWordsState extends State<RandomWords> {
@@ -32,8 +31,20 @@ class RandomWordsState extends State<RandomWords> {
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(
-        title: new Text("Scroll"),
+        title: new Text("Index"),
+        leading: IconButton(
+            icon: Icon(
+              Icons.menu,
+              semanticLabel: "menu",
+            ),
+            onPressed: () {}),
         actions: <Widget>[
+          new IconButton(
+            icon: new Icon(Icons.search),
+            onPressed: () {
+              print('Search button');
+            },
+          ),
           new IconButton(icon: new Icon(Icons.list), onPressed: _pushSaved),
         ],
       ),
@@ -57,6 +68,7 @@ class RandomWordsState extends State<RandomWords> {
     );
   }
 
+  ///生成一行
   Widget _buildRow(WordPair pair) {
     final alreadySaved = _saved.contains(pair);
     return new ListTile(
@@ -64,10 +76,8 @@ class RandomWordsState extends State<RandomWords> {
         pair.asPascalCase,
         style: _biggerFont,
       ),
-      trailing: new Icon(
-          alreadySaved ? Icons.favorite : Icons.favorite_border,
-          color: alreadySaved ? Colors.red : null
-      ),
+      trailing: new Icon(alreadySaved ? Icons.favorite : Icons.favorite_border,
+          color: alreadySaved ? Colors.red : null),
       onTap: () {
         setState(() {
           if (alreadySaved) {
@@ -80,20 +90,19 @@ class RandomWordsState extends State<RandomWords> {
     );
   }
 
+  ///跳转到收藏
   void _pushSaved() {
     Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
-      final tiles = _saved.map(
-              (pair) {
-            return new ListTile(
-              title: new Text(
-                pair.asPascalCase,
-                style: _biggerFont,
-              ),
-            );
-          }
-      );
-      final divided = ListTile.divideTiles(tiles: tiles, context: context)
-          .toList();
+      final tiles = _saved.map((pair) {
+        return new ListTile(
+          title: new Text(
+            pair.asPascalCase,
+            style: _biggerFont,
+          ),
+        );
+      });
+      final divided =
+          ListTile.divideTiles(tiles: tiles, context: context).toList();
 
       return new Scaffold(
         appBar: new AppBar(
@@ -103,5 +112,4 @@ class RandomWordsState extends State<RandomWords> {
       );
     }));
   }
-
 }
