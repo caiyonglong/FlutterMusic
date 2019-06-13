@@ -8,15 +8,54 @@ class MainPage extends StatefulWidget {
   State<StatefulWidget> createState() => new MainPageState();
 }
 
-class MainPageState extends State<MainPage> {
-  final _suggestions = <WordPair>[];
-  final _saved = new Set<WordPair>();
-  final _biggerFont = const TextStyle(fontSize: 18.0);
+class _Page {
+  _Page({this.label, this.colors, this.icon});
 
+  final String label;
+  final MaterialColor colors;
+  final IconData icon;
+
+  Color get labelColor =>
+      colors != null ? colors.shade300 : Colors.grey.shade300;
+
+  bool get fabDefined => colors != null && icon != null;
+
+  Color get fabColor => colors.shade400;
+
+  Icon get fabIcon => Icon(icon);
+
+  Key get fabKey => ValueKey<Color>(fabColor);
+}
+
+final List<_Page> _allPages = <_Page>[
+  _Page(label: 'Blue', colors: Colors.indigo, icon: Icons.add),
+  _Page(label: 'Eco', colors: Colors.green, icon: Icons.create),
+];
+
+class MainPageState extends State<MainPage>
+    with SingleTickerProviderStateMixin {
   final SearchPageSearchDelegate _delegate = SearchPageSearchDelegate();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _lastIntegerSelected;
+
+  TabController _controller;
+  _Page _selectedPage;
+  bool _extendedButtons = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TabController(vsync: this, length: _allPages.length);
+    _controller.addListener(_handleTabSelection);
+    _selectedPage = _allPages[0];
+  }
+
+  void _handleTabSelection() {
+    setState(() {
+      _selectedPage = _allPages[_controller.index];
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +74,12 @@ class MainPageState extends State<MainPage> {
           },
         ),
         title: const Text("音乐湖"),
+        bottom: TabBar(
+          controller: _controller,
+          tabs: _allPages
+              .map<Widget>((_Page page) => Tab(text: page.label.toUpperCase()))
+              .toList(),
+        ),
         actions: <Widget>[
           new IconButton(
             icon: new Icon(Icons.search),
@@ -50,27 +95,55 @@ class MainPageState extends State<MainPage> {
               }
             },
           ),
-          new IconButton(icon: new Icon(Icons.list), onPressed: _pushSaved),
         ],
       ),
-      body: _buildSuggestions(),
+      body: TabBarView(
+        controller: _controller,
+        children: _allPages.map<Widget>(buildTabView).toList(),
+      ),
       drawer: Drawer(
         child: Column(
           children: <Widget>[
             const UserAccountsDrawerHeader(
               accountName: Text('Peter Widget'),
               accountEmail: Text('peter.widget@example.com'),
-              currentAccountPicture: CircleAvatar(
-              ),
+              currentAccountPicture: CircleAvatar(),
               margin: EdgeInsets.zero,
             ),
             MediaQuery.removePadding(
               context: context,
               // DrawerHeader consumes top MediaQuery padding.
               removeTop: true,
-              child: const ListTile(
-                leading: Icon(Icons.payment),
-                title: Text('Placeholder'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ListTile(
+                    leading: const Icon(Icons.playlist_play),
+                    title: const Text('播放队列'),
+                    onTap: _showNotImplementedMessage,
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.equalizer),
+                    title: Text('均衡器'),
+                    onTap: _showNotImplementedMessage,
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.info),
+                    title: Text('关于'),
+                    onTap: _showNotImplementedMessage,
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.settings),
+                    title: Text('设置'),
+                    onTap: _showNotImplementedMessage,
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.feedback),
+                    title: Text('反馈'),
+                    onTap: _showNotImplementedMessage,
+                  ),
+                ],
               ),
             ),
           ],
@@ -84,66 +157,80 @@ class MainPageState extends State<MainPage> {
     );
   }
 
-  @override
-  Widget _buildSuggestions() {
-    return new ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemBuilder: (context, i) {
-        if (i.isOdd) return new Divider();
-        final index = i ~/ 2;
-        if (index >= _suggestions.length) {
-          _suggestions.addAll(generateWordPairs().take(10));
-        }
-
-        return _buildRow(_suggestions[index]);
-      },
-    );
+  Widget buildTabView(_Page page) {
+    return Builder(builder: (BuildContext context) {
+      return Container(
+          key: ValueKey<String>(page.label),
+          child: Column(
+            children: <Widget>[
+              Card(
+                child: Center(
+                    child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    ListTile(
+                      leading: const Icon(
+                        Icons.library_music,
+                        color: Colors.green,
+                      ),
+                      title: const Text('本地音乐'),
+                      onTap: _showNotImplementedMessage,
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.history, color: Colors.black),
+                      title: Text('播放历史'),
+                      onTap: _showNotImplementedMessage,
+                    ),
+                    ListTile(
+                      leading:
+                          Icon(Icons.favorite_border, color: Colors.redAccent),
+                      title: Text('我的收藏'),
+                      onTap: _showNotImplementedMessage,
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.video_library,
+                        color: Colors.orange,
+                      ),
+                      title: Text('本地视频'),
+                      onTap: _showNotImplementedMessage,
+                    ),
+                  ],
+                )),
+              ),
+              Card(
+                child: Center(
+                  child: Column(
+                    children: <Widget>[
+                      Container(
+                        child: Row(
+                          children: <Widget>[
+                            Container(
+                              child: Text("我的歌单"),
+                              margin: EdgeInsets.all(16.0),
+                            ),
+                            IconButton(
+                                icon: Icon(
+                                  Icons.menu,
+                                  color: Colors.black,
+                                ),
+                                onPressed: () {})
+                          ],
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        ),
+                      ),
+                      Expanded(child: Container())
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ));
+    });
   }
 
-  ///生成一行
-  Widget _buildRow(WordPair pair) {
-    final alreadySaved = _saved.contains(pair);
-    return new ListTile(
-      title: new Text(
-        pair.asPascalCase,
-        style: _biggerFont,
-      ),
-      trailing: new Icon(alreadySaved ? Icons.favorite : Icons.favorite_border,
-          color: alreadySaved ? Colors.red : null),
-      onTap: () {
-        setState(() {
-          if (alreadySaved) {
-            _saved.remove(pair);
-          } else {
-            _saved.add(pair);
-          }
-        });
-      },
-    );
-  }
-
-  ///跳转到收藏
-  void _pushSaved() {
-    Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
-      final tiles = _saved.map((pair) {
-        return new ListTile(
-          title: new Text(
-            pair.asPascalCase,
-            style: _biggerFont,
-          ),
-        );
-      });
-      final divided =
-          ListTile.divideTiles(tiles: tiles, context: context).toList();
-
-      return new Scaffold(
-        appBar: new AppBar(
-          title: new Text("Saved Suggestions"),
-        ),
-        body: new ListView(children: divided),
-      );
-    }));
-  }
+  void _showNotImplementedMessage() {}
 }
 
 class _DemoBottomAppBar extends StatelessWidget {
@@ -157,14 +244,15 @@ class _DemoBottomAppBar extends StatelessWidget {
   final FloatingActionButtonLocation fabLocation;
   final NotchedShape shape;
 
-  static final List<FloatingActionButtonLocation> kCenterLocations = <FloatingActionButtonLocation>[
+  static final List<FloatingActionButtonLocation> kCenterLocations =
+      <FloatingActionButtonLocation>[
     FloatingActionButtonLocation.centerDocked,
     FloatingActionButtonLocation.centerFloat,
   ];
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> rowContents = <Widget> [
+    final List<Widget> rowContents = <Widget>[
       Text("歌曲名\n歌手名"),
     ];
 
@@ -174,7 +262,7 @@ class _DemoBottomAppBar extends StatelessWidget {
       );
     }
 
-    rowContents.addAll(<Widget> [
+    rowContents.addAll(<Widget>[
       IconButton(
         icon: Icon(
           Theme.of(context).platform == TargetPlatform.iOS
@@ -196,8 +284,7 @@ class _DemoBottomAppBar extends StatelessWidget {
         margin: EdgeInsets.only(left: 16),
         child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: rowContents
-        ),
+            children: rowContents),
       ),
       shape: shape,
     );
